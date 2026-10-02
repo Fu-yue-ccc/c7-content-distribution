@@ -1,0 +1,181 @@
+<section style="font-size:15px;color:#3f3f3f;line-height:1.75;letter-spacing:0.5px;word-break:break-word;">
+
+<section style="margin-bottom:25px;">
+<p style="font-size:22px;font-weight:bold;color:#1a1a1a;line-height:1.4;margin:0 0 10px 0;">零 API 费用！我用本地大模型做了一个 AI 地图生成器</p>
+<p style="font-size:14px;color:#888;margin:0;">你没看错——不需要花一分钱调用 GPT，也不需要联网，AI 就能在你的电脑上生成一张交互式地图。</p>
+</section>
+
+<p style="margin:0 0 18px 0;">大家好，我是一名人工智能专业的大一学生。</p>
+
+<p style="margin:0 0 18px 0;">最近课程要求我们做一个项目：<strong style="color:#1a1a1a;">输入一个地点名称，AI 自动生成带分类标记的交互式地图。</strong></p>
+
+<p style="margin:0 0 18px 0;">正常思路是调用 GPT-4 的 API，让它返回地点的经纬度和描述，然后用地图库渲染。</p>
+
+<p style="margin:0 0 18px 0;">但问题来了——<strong style="color:#d93025;">API 要花钱，而且我的数据要发到别人的服务器上。</strong></p>
+
+<p style="margin:0 0 18px 0;">作为一个经济紧张的学生，我决定换个思路：<strong style="color:#1a1a1a;">让大模型完全在本地运行。</strong></p>
+
+<p style="margin:0 0 25px 0;">结果，我真的做出来了。这篇文章把完整过程写出来，你照着做也能跑通。</p>
+
+<section style="background:#f5f7fa;border-left:4px solid #667eea;padding:15px 18px;margin:0 0 25px 0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-weight:bold;color:#1a1a1a;font-size:16px;">一、先看效果</p>
+</section>
+
+<p style="margin:0 0 18px 0;">最终生成的地图长这样：</p>
+
+<p style="margin:0 0 12px 0;">打开一个 HTML 文件，地图上有 <strong>12 个彩色标记点</strong>，每个点一种分类颜色。</p>
+
+<p style="margin:0 0 12px 0;">点击标记，弹出地点名称、描述、坐标。可以缩放、拖拽，左下角有分类图例。</p>
+
+<p style="margin:0 0 18px 0;">我用的是自己学校——郑州西亚斯学院的真实数据，包含莫斯科红场、欧洲街、法国园等 12 个校园地标。</p>
+
+<p style="margin:0 0 25px 0;"><strong style="color:#1a7f37;">整个过程零 API 费用，AI 完全在我笔记本上运行。</strong></p>
+
+<section style="background:#f5f7fa;border-left:4px solid #667eea;padding:15px 18px;margin:0 0 25px 0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-weight:bold;color:#1a1a1a;font-size:16px;">二、用了什么工具</p>
+</section>
+
+<p style="margin:0 0 18px 0;"><strong style="color:#1a1a1a;">1. Ollama：本地大模型运行器</strong></p>
+
+<p style="margin:0 0 12px 0;">Ollama 是一个可以让你在本地电脑上跑大模型的工具，安装极其简单。Windows/Mac 官网下载安装包，Linux 一行命令搞定。</p>
+
+<p style="margin:0 0 18px 0;">安装后，终端输入一行命令下载模型：</p>
+
+<section style="background:#1e1e1e;border-radius:8px;padding:12px 15px;margin:0 0 18px 0;">
+<p style="margin:0;color:#d4d4d4;font-family:monospace;font-size:13px;line-height:1.6;">ollama pull gemma4:e4b</p>
+</section>
+
+<p style="margin:0 0 18px 0;"><strong style="color:#1a1a1a;">2. Gemma 4：Google 开源大模型</strong></p>
+
+<p style="margin:0 0 12px 0;">我用的是 Google 的 Gemma 4，Apache 2.0 开源协议，可以免费商用。选它三个原因：</p>
+
+<p style="margin:0 0 8px 0;">· 支持函数调用（function calling），做 Agent 的关键</p>
+<p style="margin:0 0 8px 0;">· 支持结构化输出，可以强制返回 JSON</p>
+<p style="margin:0 0 18px 0;">· 体积小，e4b 版本普通笔记本就能跑</p>
+
+<p style="margin:0 0 18px 0;"><strong style="color:#1a1a1a;">3. Folium：Python 地图库</strong></p>
+
+<p style="margin:0 0 25px 0;">Folium 是 Python 交互式地图库，基于 Leaflet.js，几行代码就能生成带标记的地图。</p>
+
+<section style="background:#f5f7fa;border-left:4px solid #667eea;padding:15px 18px;margin:0 0 25px 0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-weight:bold;color:#1a1a1a;font-size:16px;">三、核心思路：四步流水线</p>
+</section>
+
+<p style="margin:0 0 18px 0;">整个项目的工作流程：</p>
+
+<section style="background:#f0f4ff;border-radius:8px;padding:15px;margin:0 0 20px 0;text-align:center;">
+<p style="margin:0;font-size:13px;color:#555;line-height:2;">用户输入地点名称和数量<br>↓<br>本地 Gemma 4 生成结构化 JSON<br>↓<br>自动验证坐标和字段完整性<br>↓<br>Folium 渲染成交互式 HTML 地图</p>
+</section>
+
+<p style="margin:0 0 12px 0;"><strong style="color:#1a1a1a;">第一步：让 AI 输出 JSON</strong></p>
+
+<p style="margin:0 0 12px 0;">关键是写好 System Prompt，强制模型只返回 JSON：</p>
+
+<section style="background:#1e1e1e;border-radius:8px;padding:12px 15px;margin:0 0 18px 0;">
+<p style="margin:0;color:#d4d4d4;font-family:monospace;font-size:12px;line-height:1.7;">system_prompt = """You are a geography assistant.<br>You ALWAYS respond with valid JSON only.<br>No markdown, no explanations.<br>Each location has: name, name_zh,<br>latitude, longitude, description,<br>category."""</p>
+</section>
+
+<p style="margin:0 0 12px 0;">大模型有时候会"不听话"，在 JSON 外面包一层 markdown 代码块，代码里要做清理：</p>
+
+<section style="background:#1e1e1e;border-radius:8px;padding:12px 15px;margin:0 0 25px 0;">
+<p style="margin:0;color:#d4d4d4;font-family:monospace;font-size:12px;line-height:1.7;">content = content.replace("```json","")<br>content = content.replace("```","").strip()</p>
+</section>
+
+<p style="margin:0 0 12px 0;"><strong style="color:#1a1a1a;">第二步：自动验证数据</strong></p>
+
+<p style="margin:0 0 12px 0;">AI 生成的坐标可能是错的（"坐标幻觉"）。验证器检查每个地点：</p>
+
+<p style="margin:0 0 8px 0;">· 六个字段是否齐全</p>
+<p style="margin:0 0 8px 0;">· 坐标是否是数字、范围是否合法</p>
+<p style="margin:0 0 18px 0;">· 坐标是否在目标地点合理范围内</p>
+
+<p style="margin:0 0 12px 0;"><strong style="color:#1a1a1a;">第三步：分类着色</strong></p>
+
+<p style="margin:0 0 12px 0;">定义了 12 种地点分类，每种对应一个颜色：</p>
+
+<section style="margin:0 0 20px 0;">
+<table style="width:100%;border-collapse:collapse;font-size:13px;">
+<tr style="background:#f5f7fa;"><td style="padding:8px 12px;border:1px solid #e0e0e0;">分类</td><td style="padding:8px 12px;border:1px solid #e0e0e0;">颜色</td></tr>
+<tr><td style="padding:8px 12px;border:1px solid #e0e0e0;">校门</td><td style="padding:8px 12px;border:1px solid #e0e0e0;color:#d93025;">红色</td></tr>
+<tr><td style="padding:8px 12px;border:1px solid #e0e0e0;">地标建筑</td><td style="padding:8px 12px;border:1px solid #e0e0e0;color:#1a73e8;">蓝色</td></tr>
+<tr><td style="padding:8px 12px;border:1px solid #e0e0e0;">教学设施</td><td style="padding:8px 12px;border:1px solid #e0e0e0;color:#1a7f37;">绿色</td></tr>
+<tr><td style="padding:8px 12px;border:1px solid #e0e0e0;">体育设施</td><td style="padding:8px 12px;border:1px solid #e0e0e0;color:#e37400;">橙色</td></tr>
+<tr><td style="padding:8px 12px;border:1px solid #e0e0e0;">商业街</td><td style="padding:8px 12px;border:1px solid #e0e0e0;color:#8430ce;">紫色</td></tr>
+</table>
+</section>
+
+<p style="margin:0 0 12px 0;"><strong style="color:#1a1a1a;">第四步：渲染地图</strong></p>
+
+<p style="margin:0 0 12px 0;">用 Folium 生成地图，添加标记、弹窗、图例、标题栏，保存为 HTML 文件。双击打开就是交互式地图。</p>
+
+<section style="background:#f5f7fa;border-left:4px solid #667eea;padding:15px 18px;margin:0 0 25px 0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-weight:bold;color:#1a1a1a;font-size:16px;">四、踩了三个大坑</p>
+</section>
+
+<p style="margin:0 0 12px 0;"><strong style="color:#d93025;">坑 1：AI 给的坐标偏差 3.5 公里</strong></p>
+
+<p style="margin:0 0 12px 0;">第一次让 AI 生成学校坐标，它给了 34.40°N, 113.73°E。高德地图一查，实际是 34.401422°N, 113.765004°E——<strong>经度差了 3.5 公里！</strong></p>
+
+<p style="margin:0 0 18px 0;"><strong>教训：AI 生成的精确坐标一定要用地图服务验证。</strong></p>
+
+<p style="margin:0 0 12px 0;"><strong style="color:#d93025;">坑 2：模型太大，电脑带不动</strong></p>
+
+<p style="margin:0 0 12px 0;">一开始想跑 26B 参数模型，8GB 内存笔记本直接卡死。换成 e4b 版本后流畅运行。</p>
+
+<p style="margin:0 0 18px 0;">8GB 内存用 e2b，16GB 用 e4b（推荐），有独显可以试 26B。</p>
+
+<p style="margin:0 0 12px 0;"><strong style="color:#d93025;">坑 3：Ollama 服务没启动</strong></p>
+
+<p style="margin:0 0 25px 0;">第一次运行一直提示"无法连接"，排查半天发现 Ollama 服务没在后台运行。Windows 检查任务栏图标，Linux 手动运行 ollama serve。</p>
+
+<section style="background:#f5f7fa;border-left:4px solid #667eea;padding:15px 18px;margin:0 0 25px 0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-weight:bold;color:#1a1a1a;font-size:16px;">五、离线模式：100% 可用</p>
+</section>
+
+<p style="margin:0 0 12px 0;">为了防止模型出问题，加了离线模式，不调用 AI，直接使用内置的 12 个经过人工核实的真实地点：</p>
+
+<section style="background:#1e1e1e;border-radius:8px;padding:12px 15px;margin:0 0 18px 0;">
+<p style="margin:0;color:#d4d4d4;font-family:monospace;font-size:13px;">python sias_map_agent.py --offline</p>
+</section>
+
+<p style="margin:0 0 25px 0;"><strong style="color:#1a7f37;">这个设计保证项目 100% 可用，不会因为 AI 故障完全瘫痪。</strong></p>
+
+<section style="background:#f5f7fa;border-left:4px solid #667eea;padding:15px 18px;margin:0 0 25px 0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-weight:bold;color:#1a1a1a;font-size:16px;">六、从脚本到 Web App</p>
+</section>
+
+<p style="margin:0 0 18px 0;">做完本地脚本后，又升级成了网页应用。用户打开网页，输入地点名称，选择 Demo 或 AI 模式，点击生成就能看到地图。</p>
+
+<p style="margin:0 0 25px 0;">技术栈纯 HTML + Tailwind CSS + JavaScript + Leaflet.js，单文件零依赖。部署到 Vercel 后任何人打开链接就能使用。</p>
+
+<section style="background:#f5f7fa;border-left:4px solid #667eea;padding:15px 18px;margin:0 0 25px 0;border-radius:0 8px 8px 0;">
+<p style="margin:0;font-weight:bold;color:#1a1a1a;font-size:16px;">七、你可以怎么做</p>
+</section>
+
+<p style="margin:0 0 12px 0;">如果你也想做类似项目，建议按这个顺序：</p>
+
+<p style="margin:0 0 8px 0;">1. 安装 Ollama，下载 gemma4:e4b</p>
+<p style="margin:0 0 8px 0;">2. 安装依赖：pip install requests folium</p>
+<p style="margin:0 0 8px 0;">3. 先跑离线模式确认地图正常</p>
+<p style="margin:0 0 8px 0;">4. 再试 AI 模式观察模型输出</p>
+<p style="margin:0 0 8px 0;">5. 用高德地图核对坐标</p>
+<p style="margin:0 0 18px 0;">6. 最后部署上线分享给同学</p>
+
+<p style="margin:0 0 25px 0;">整个过程 AI 辅助下大约需要半天时间。</p>
+
+<section style="background:#fff8e1;border-radius:8px;padding:18px;margin:0 0 25px 0;">
+<p style="margin:0 0 10px 0;font-weight:bold;color:#1a1a1a;">写在最后</p>
+<p style="margin:0 0 12px 0;">做完这个项目最大的感受：<strong>本地大模型的能力被严重低估了。</strong></p>
+<p style="margin:0 0 12px 0;">它不需要联网、不花 API 费用、数据不离开你的设备，能力已经足够完成很多实际任务。</p>
+<p style="margin:0;">关键不是工具有多强，而是你能不能把工具组合起来解决真实问题。</p>
+</section>
+
+<p style="margin:0 0 18px 0;">如果这篇文章对你有帮助，欢迎点赞、在看、转发给需要的同学。</p>
+
+<section style="background:#f5f7fa;border-radius:8px;padding:15px;margin:0 0 20px 0;text-align:center;">
+<p style="margin:0;font-size:14px;color:#555;">你也想用本地大模型做什么项目？<br>欢迎在评论区留言，我会一一回复。</p>
+</section>
+
+<p style="margin:0;font-size:13px;color:#999;text-align:center;">项目源码已开源，需要代码的同学可以在评论区留言</p>
+
+</section>
